@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Little Adventure ❤️</title>
+<style>
+  :root { --pink:#f4a6bd; --deep:#9b315b; --ink:#382532; --cream:#fff8f7; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; display:grid; place-items:center; padding:20px;
+    font-family:system-ui,-apple-system,Segoe UI,sans-serif; color:var(--ink);
+    background:radial-gradient(circle at top left,#ffe0e9,transparent 45%),
+               linear-gradient(135deg,#fff7f4,#fce7ef);
+  }
+  .card {
+    width:min(100%,540px); background:rgba(255,255,255,.94); border:1px solid #f5d6e0;
+    border-radius:25px; padding:clamp(22px,5vw,38px); box-shadow:0 18px 55px #8d31501c;
+    text-align:center; position:relative; overflow:hidden;
+  }
+  .eyebrow { color:var(--deep); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:800; }
+  h1 { font-size:clamp(1.8rem,6vw,2.45rem); line-height:1.12; margin:12px 0; }
+  p { line-height:1.7; color:#685360; }
+  .heart { font-size:2.6rem; margin:5px 0 12px; animation:float 2s ease-in-out infinite; }
+  @keyframes float { 50% { transform:translateY(-7px) rotate(5deg); } }
+  .actions { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:24px; }
+  button, .btn {
+    border:0; border-radius:999px; padding:13px 22px; font-weight:750; font-size:1rem;
+    cursor:pointer; transition:transform .15s,filter .15s; text-decoration:none;
+  }
+  button:hover { transform:translateY(-2px); filter:brightness(.98); }
+  .primary { background:var(--deep); color:white; }
+  .soft { background:#fbe5ed; color:var(--deep); }
+  .quiet { background:#f3eef0; color:#67535f; }
+  .choice-list { display:grid; gap:10px; margin:20px 0; text-align:left; }
+  .country {
+    display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid #f0d5df;
+    border-radius:15px; cursor:pointer; background:#fff; text-align:left;
+  }
+  .country:has(input:checked) { border:2px solid var(--deep); background:#fff6f9; padding:13px; }
+  .country input { accent-color:var(--deep); margin-top:5px; }
+  .country strong { display:block; color:#54283e; }
+  .country small { display:block; color:#806b77; margin-top:3px; line-height:1.45; }
+  input[type="text"], input[type="date"] {
+    width:100%; border:1px solid #e7cbd6; border-radius:13px; padding:14px; font:inherit;
+    color:var(--ink); background:#fff; margin-top:8px;
+  }
+  label.field { display:block; text-align:left; font-weight:700; margin:18px 0; }
+  .story {
+    text-align:left; background:#fff6f8; border-radius:18px; padding:18px;
+    border:1px solid #f5dce4; max-height:340px; overflow:auto;
+  }
+  .story p { margin:0 0 13px; }
+  .progress { height:5px; background:#f6e4eb; border-radius:10px; margin:0 0 24px; overflow:hidden; }
+  .progress span { display:block; height:100%; background:var(--pink); width:0; transition:width .3s; }
+  .note { font-size:.82rem; color:#9b8791; margin-top:22px; }
+  .hidden { display:none !important; }
+  .error { color:#b4234d; font-size:.9rem; min-height:1.3em; }
+  @media(max-width:420px) { .actions button { flex:1 1 42%; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="heart" aria-hidden="true">💗</div>
+  <div id="screen"></div>
+  <div class="note">A little interactive adventure, made just for you ✨</div>
+</main>
+<script>
+const screen = document.getElementById('screen');
+const progressBar = document.getElementById('progressBar');
+let selectedCountry = '';
+let selectedMovie = '';
+let selectedDate = '';
+
+const countries = [
+  ['🇫🇷','France','Eiffel Tower, Paris'],
+  ['🇯🇵','Japan','Mount Fuji and the streets of Kyoto'],
+  ['🇮🇹','Italy','Colosseum, Rome'],
+  ['🇬🇧','United Kingdom','Big Ben and the Tower of London'],
+  ['🇨🇭','Switzerland','The Swiss Alps and Lake Geneva'],
+  ['🇿🇦','South Africa','Table Mountain, Cape Town'],
+  ['🇲🇻','Maldives','The turquoise lagoons and island resorts'],
+  ['🇪🇬','Egypt','The Pyramids of Giza'],
+  ['🇺🇸','United States','Statue of Liberty, New York'],
+  ['🇨🇳','China','The Great Wall of China']
+];
+
+function render(step, html, progress) {
+  progressBar.style.width = progress + '%';
+  screen.innerHTML = html;
+}
+function buttons(yesText, noText, yesFn, noFn) {
+  return `<div class="actions">
+    <button class="primary" id="yesBtn">${yesText}</button>
+    <button class="soft" id="noBtn">${noText}</button>
+  </div>`;
+}
+function start() {
+  render(0, `<div class="eyebrow">A tiny question for you</div>
+    <h1>Are you feeling bored? 🥺</h1>
+    <p>If you are, I've prepared a little something to brighten your day.</p>
+    ${buttons('Yes, a little 💗','No, I’m good 😊')}
+  `, 5);
+  document.getElementById('yesBtn').onclick = storyInvite;
+  document.getElementById('noBtn').onclick = notBored;
+}
+function notBored() {
+  render(0, `<div class="eyebrow">Well, that's good!</div><h1>I'm glad you're doing okay. 😊</h1>
+    <p>But can I borrow just two minutes of your time for a tiny adventure?</p>
+    ${buttons('Okay, let’s go ✨','Maybe later')}
+  `, 5);
+  document.getElementById('yesBtn').onclick = storyInvite;
+  document.getElementById('noBtn').onclick = () => finish('No pressure at all. This little adventure will be here whenever you feel like it. 💗');
+}
+function storyInvite() {
+  render(1, `<div class="eyebrow">Chapter one</div><h1>Do you want to listen to a story? 📖</h1>
+    <p>It has a little thrill, a little romance, and maybe a tiny bit of magic.</p>
+    ${buttons('Tell me the story ❤️','Not right now', showStory, () => finish('That’s okay. I hope the rest of your day is lovely. 🌷'))}
+  `, 18);
+  document.getElementById('yesBtn').onclick = showStory;
+  document.getElementById('noBtn').onclick = () => finish('That’s okay. I hope the rest of your day is lovely. 🌷');
+}
+function showStory() {
+  render(2, `<div class="eyebrow">A short story</div><h1>The Last Train at 8:05 🚆</h1>
+    <div class="story">
+      <p>It was 8:03 p.m. when Ama realised she was on the wrong platform. Rain tapped against the station roof, her phone battery was at 2%, and the last train was about to leave.</p>
+      <p>Then a stranger beside her noticed the ticket in her hand. “I think we're both trying to catch the same train,” he said, smiling. He pointed her toward the right platform just as the doors began to close.</p>
+      <p>They made it. The train rushed through the night, and the lights of the city slipped past the window like stars. A sudden announcement revealed that the train would make an unexpected stop because of a signal problem.</p>
+      <p>“Well,” he said, “looks like our little adventure isn't over.” Ama laughed. They talked about places they wanted to see, movies they loved, and the kind of memories that make ordinary days special.</p>
+      <p>When the train finally arrived, he asked, “Would it be strange if I hoped we met again?” She smiled. “Only if you don't ask.” And just like that, a rainy evening became the beginning of a story neither of them had planned. 💗</p>
+    </div>
+    <div class="actions"><button class="primary" id="continueBtn">Continue 💞</button></div>
+  `, 34);
+  document.getElementById('continueBtn').onclick = enjoyed;
+}
+function enjoyed() {
+  render(3, `<div class="eyebrow">Be honest now</div><h1>Did you enjoy the story? 🥰</h1>
+    <p>I hope it made you smile, even just a little.</p>
+    ${buttons('Yes, I loved it 💗','It was okay 😅')}
+  `, 48);
+  document.getElementById('yesBtn').onclick = travel;
+  document.getElementById('noBtn').onclick = travel;
+}
+function travel() {
+  const options = countries.map((c,i) => `<label class="country">
+    <input type="radio" name="country" value="${c[1]}" ${selectedCountry===c[1]?'checked':''}>
+    <span>${c[0]}</span><span><strong>${c[1]}</strong><small>Popular place: ${c[2]}</small></span>
+  </label>`).join('');
+  render(4, `<div class="eyebrow">Dream a little</div><h1>Where would you love to travel in the next five years? ✈️</h1>
+    <p>Choose the country you'd be most excited to explore.</p>
+    <div class="choice-list">${options}</div>
+    <div class="error" id="error"></div>
+    <div class="actions"><button class="primary" id="travelNext">This one! 🌍</button></div>
+  `, 62);
+  document.getElementById('travelNext').onclick = () => {
+    const choice = document.querySelector('input[name="country"]:checked');
+    if (!choice) { document.getElementById('error').textContent = 'Pick a country first 😊'; return; }
+    selectedCountry = choice.value;
+    travelTogether();
+  };
+}
+function travelTogether() {
+  const place = countries.find(c=>c[1]===selectedCountry);
+  render(5, `<div class="eyebrow">Imagine this...</div><h1>${place[0]} ${selectedCountry}!</h1>
+    <p>Just imagine visiting <strong>${place[2]}</strong>, taking pictures, trying new food and making unforgettable memories.</p>
+    <h1 style="font-size:1.65rem;margin-top:25px">Would you want to go with me? 🥹</h1>
+    <p>No pressure. I just think it would be a beautiful adventure together.</p>
+    ${buttons('Yes, let’s go! ❤️','Maybe someday')}
+  `, 75);
+  document.getElementById('yesBtn').onclick = movieQuestion;
+  document.getElementById('noBtn').onclick = movieQuestion;
+}
+function movieQuestion() {
+  render(6, `<div class="eyebrow">One more idea</div><h1>How about watching your favourite movie together? 🎬</h1>
+    <p>Snacks, a cosy evening, and your favourite movie. Sounds like a plan?</p>
+    ${buttons('Absolutely! 🍿','Maybe another time')}
+  `, 84);
+  document.getElementById('yesBtn').onclick = movieDetails;
+  document.getElementById('noBtn').onclick = () => finish('No worries. We can save the movie night for another time. 😊');
+}
+function movieDetails() {
+  render(7, `<div class="eyebrow">Movie night</div><h1>Let's make it happen! 🍿</h1>
+    <p>What's the movie you'd love us to watch?</p>
+    <label class="field">Your favourite movie
+      <input type="text" id="movieInput" placeholder="Enter the movie title">
+    </label>
+    <label class="field">When would you like us to meet?
+      <input type="date" id="dateInput" min="${new Date().toISOString().split('T')[0]}">
+    </label>
+    <div class="error" id="error"></div>
+    <div class="actions"><button class="primary" id="submitPlan">Save our plan 💗</button></div>
+  `, 94);
+  document.getElementById('submitPlan').onclick = () => {
+    selectedMovie = document.getElementById('movieInput').value.trim();
+    selectedDate = document.getElementById('dateInput').value;
+    const error = document.getElementById('error');
+    if (!selectedMovie || !selectedDate) { error.textContent = 'Please enter a movie and choose a date.'; return; }
+    finish(`It's a date! 💗 Your movie choice is <strong>${escapeHTML(selectedMovie)}</strong>, and your suggested meeting date is <strong>${new Date(selectedDate+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</strong>.<br><br>Now we just have to confirm the plan together. I can't wait for this little adventure! ❤️`);
+  };
+}
+function escapeHTML(value) {
+  return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function finish(message) {
+  const hasPlan = Boolean(selectedMovie && selectedDate);
+  render(8, `<div class="eyebrow">The end… or the beginning? 💌</div><h1>Thank you for playing along!</h1>
+    <p>${message}</p>
+    ${hasPlan ? '<p>Send your choices to me so we can confirm our plan. 💗</p><div class="actions"><button class="primary" id="sendPlan">Send my answers on WhatsApp 💬</button></div>' : ''}
+    <div class="heart">💕</div>
+    <div class="actions"><button class="soft" id="restart">Start again ↻</button></div>
+  `, 100);
+  if (hasPlan) {
+    document.getElementById('sendPlan').onclick = () => {
+      const prettyDate = new Date(selectedDate+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+      const messageText = `My answers to our little adventure 💗\nCountry I'd love to visit: ${selectedCountry || 'Not selected'}\nMovie I'd love us to watch: ${selectedMovie}\nSuggested meeting date: ${prettyDate}\n\nLet's confirm our plan!`;
+      window.location.href = 'https://wa.me/?text=' + encodeURIComponent(messageText);
+    };
+  }
+  document.getElementById('restart').onclick = start;
+}
+start();
+</script>
+</body>
+</html>
